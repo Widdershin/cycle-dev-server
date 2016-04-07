@@ -27,6 +27,10 @@ app.get('/styles.css', function (req, res) {
   res.sendFile(__dirname + '/styles.css');
 });
 
+app.get('/code/app.js', function (req, res) {
+  res.send(JSON.stringify({code: fs.readFileSync('./app.js', 'utf-8')}));
+});
+
 app.put('/code/app.js', function (req, res) {
   fs.writeFileSync('./app.js', req.body.code);
   res.sendStatus(200);

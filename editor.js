@@ -50,7 +50,7 @@ const drivers = {
   SubApp: subAppDriver
 };
 
-function updateServer (code) {
+function updateServer ({code}) {
   return {
     url: '/code/app.js',
     method: 'PUT',
@@ -58,12 +58,28 @@ function updateServer (code) {
   };
 }
 
+function requestApp () {
+  return {
+    url: '/code/app.js',
+    method: 'GET'
+  };
+}
+
 function main ({DOM, HTTP}) {
-  const code$ = DOM
+  const editorChange$ = DOM
     .select('.editor-form')
     .events('input')
     .map(event => ({code: event.target.value, err: ''}))
-    .startWith({code: initialCode, err: ''})
+
+  const serverCode$ = HTTP
+    .filter(response$ => response$.request.method === 'GET')
+    .mergeAll()
+    .map(response => JSON.parse(response.text));
+
+  const code$ = O.merge(
+      serverCode$,
+      editorChange$
+    )
 
   return {
     DOM: code$.map(({code}) =>
@@ -72,7 +88,7 @@ function main ({DOM, HTTP}) {
 
     SubApp: code$.pluck('code'),
 
-    HTTP: code$.debounce(500).map(updateServer)
+    HTTP: code$.debounce(500).map(updateServer).startWith(requestApp())
   };
 }
 

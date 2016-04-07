@@ -1,4 +1,3 @@
-
 import {makeDOMDriver, div, textarea} from '@cycle/dom';
 
 import {Observable as O} from 'rx';
@@ -9,8 +8,8 @@ const drivers = {
 
 function main ({DOM}) {
   return {
-    DOM: O.just(
-      div('.hello-world', 'Hello World')
+    DOM: O.interval(1000).map(i =>
+      div('.hello-world', 'Hello world' + i)
     )
   };
 }
