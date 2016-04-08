@@ -39,6 +39,15 @@ body {
   cursor: col-resize;
 }
 
+.editor-resizer:after {
+  content: '|';
+  top: 50%;
+  left: 23%;
+  color: gray;
+  position: relative;
+  font-size: 27px;
+}
+
 .app {
   display: inline-block;
 }

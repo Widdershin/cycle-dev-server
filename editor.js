@@ -134,7 +134,7 @@ function updateWidthIfDragging (mousePosition) {
     if (resizerState.dragging) {
       resizerState.width = mousePosition.x;
 
-      resizerState.visible = resizerState.width > 1;
+      resizerState.visible = resizerState.width > 20;
     }
 
     return resizerState;
