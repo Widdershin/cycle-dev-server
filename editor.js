@@ -69,7 +69,7 @@ function main ({DOM, HTTP}) {
   const editorChange$ = DOM
     .select('.editor-form')
     .events('input')
-    .map(event => ({code: event.target.value, err: ''}))
+    .map(event => ({code: event.target.value, err: ''}));
 
   const serverCode$ = HTTP
     .filter(response$ => response$.request.method === 'GET')
@@ -77,9 +77,9 @@ function main ({DOM, HTTP}) {
     .map(response => JSON.parse(response.text));
 
   const code$ = O.merge(
-      serverCode$,
-      editorChange$
-    )
+    serverCode$,
+    editorChange$
+  );
 
   return {
     DOM: code$.map(({code}) =>
