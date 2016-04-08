@@ -1,15 +1,18 @@
 html, body {
   height: 100%;
+  margin: 0;
 }
 
 body {
   display: flex;
 }
 
-.editor, .editor-form {
+#editor {
   height: 100%;
 
-  width: 500px;
+  width: 600px;
+
+  margin-right: 5px;
 }
 
 .app {

@@ -2,14 +2,43 @@ import {run} from '@cycle/core';
 import {makeDOMDriver, div, textarea} from '@cycle/dom';
 import {makeHTTPDriver} from '@cycle/http';
 
-import {Observable as O} from 'rx';
+import {Observable as O, ReplaySubject} from 'rx';
 
 const babel = require('babel-core');
 import es2015 from 'babel-preset-es2015';
 
 import vm from 'vm';
 
-import initialCode from './initial-code';
+import ace from 'brace';
+import 'brace/mode/javascript';
+import 'brace/theme/monokai';
+import 'brace/keybinding/vim';
+
+function aceDriver (code$) {
+  const editor = ace.edit('editor');
+  const codeChange$ = new ReplaySubject();
+
+  editor.getSession().setMode('ace/mode/javascript');
+  editor.setTheme('ace/theme/monokai');
+
+  editor.getSession().setOptions({
+    tabSize: 2
+  });
+
+  code$.subscribe(code => {
+    editor.setValue(code);
+
+    editor.clearSelection();
+  });
+
+  editor.on('input', sendCodeToSource);
+
+  function sendCodeToSource () {
+    codeChange$.onNext({code: editor.getSession().getValue()});
+  }
+
+  return {code$: codeChange$};
+}
 
 function subAppDriver (code$) {
   function compile (code) {
@@ -17,12 +46,12 @@ function subAppDriver (code$) {
   }
 
   function execute (compiledCode) {
-    const exports = {}
+    const exports = {};
     const context = {require, console, exports};
 
     console.log(compiledCode);
 
-    const result = vm.runInNewContext(compiledCode, context);
+    vm.runInNewContext(compiledCode, context);
 
     return exports;
   }
@@ -45,9 +74,9 @@ function subAppDriver (code$) {
 }
 
 const drivers = {
-  DOM: makeDOMDriver('.editor'),
   HTTP: makeHTTPDriver({eager: true}),
-  SubApp: subAppDriver
+  SubApp: subAppDriver,
+  Ace: aceDriver
 };
 
 function updateServer ({code}) {
@@ -65,12 +94,7 @@ function requestApp () {
   };
 }
 
-function main ({DOM, HTTP}) {
-  const editorChange$ = DOM
-    .select('.editor-form')
-    .events('input')
-    .map(event => ({code: event.target.value, err: ''}));
-
+function main ({Ace, HTTP}) {
   const serverCode$ = HTTP
     .filter(response$ => response$.request.method === 'GET')
     .mergeAll()
@@ -78,13 +102,11 @@ function main ({DOM, HTTP}) {
 
   const code$ = O.merge(
     serverCode$,
-    editorChange$
+    Ace.code$
   );
 
   return {
-    DOM: code$.map(({code}) =>
-      textarea('.editor-form', code)
-    ),
+    Ace: code$.pluck('code').take(1),
 
     SubApp: code$.pluck('code'),
 
