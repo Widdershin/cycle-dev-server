@@ -7,16 +7,16 @@ body {
   display: flex;
 }
 
-.tools, .editor {
+.tools, .editor, .editor-main {
   height: 100%;
+}
+
+.editor {
+  display: flex;
 }
 
 #editor-inner {
   height: 100%;
-
-  width: 600px;
-
-  margin-right: 5px;
 }
 
 .message-panel {
@@ -27,6 +27,16 @@ body {
 
   margin: 0;
   padding: 5px;
+}
+
+.editor-resizer {
+  width: 10px;
+  background: #445;
+  height: 100%;
+
+  margin-right: 5px;
+
+  cursor: col-resize;
 }
 
 .app {

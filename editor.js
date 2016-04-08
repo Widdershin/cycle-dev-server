@@ -14,6 +14,27 @@ import 'brace/mode/javascript';
 import 'brace/theme/monokai';
 import 'brace/keybinding/vim';
 
+function mousePosition (event) {
+  return {
+    x: event.clientX,
+    y: event.clientY
+  };
+}
+
+function mouseDriver () {
+  const position$ = O
+    .fromEvent(document, 'mousemove')
+    .map(mousePosition);
+
+  const up$ = O
+    .fromEvent(document, 'mouseup');
+
+  return {
+    position$,
+    up$
+  };
+}
+
 function aceDriver (code$) {
   let editor;
 
@@ -27,7 +48,7 @@ function aceDriver (code$) {
     });
 
     editor.on('input', sendCodeToSource);
-  })
+  });
 
   const codeChange$ = new ReplaySubject(1);
 
@@ -52,8 +73,6 @@ function subAppDriver (code$) {
   function execute (compiledCode) {
     const exports = {};
     const context = {require, console, exports};
-
-    console.log(compiledCode);
 
     vm.runInNewContext(compiledCode, context);
 
@@ -91,7 +110,8 @@ const drivers = {
   DOM: makeDOMDriver('.tools'),
   HTTP: makeHTTPDriver({eager: true}),
   SubApp: subAppDriver,
-  Ace: aceDriver
+  Ace: aceDriver,
+  Mouse: mouseDriver
 };
 
 function updateServer ({code}) {
@@ -109,7 +129,33 @@ function requestApp () {
   };
 }
 
-function main ({DOM, Ace, HTTP, SubApp}) {
+function updateWidthIfDragging (mousePosition) {
+  return function (resizerState) {
+    if (resizerState.dragging) {
+      resizerState.width = mousePosition.x;
+    }
+
+    return resizerState;
+  };
+}
+
+function startDragging () {
+  return function (resizerState) {
+    resizerState.dragging = true;
+
+    return resizerState;
+  };
+}
+
+function stopDragging () {
+  return function (resizerState) {
+    resizerState.dragging = false;
+
+    return resizerState;
+  };
+}
+
+function main ({DOM, Ace, HTTP, SubApp, Mouse}) {
   const serverCode$ = HTTP
     .filter(response$ => response$.request.method === 'GET')
     .mergeAll()
@@ -120,12 +166,61 @@ function main ({DOM, Ace, HTTP, SubApp}) {
     Ace.code$
   );
 
+  const mouseDownEditorResizer$ = DOM
+    .select('.editor-resizer')
+    .events('mousedown');
+
+  const editorWidthState = {
+    dragging: false,
+    width: 600
+  };
+
+  const moveMouse$ = Mouse.position$.map(updateWidthIfDragging);
+  const startDragging$ = mouseDownEditorResizer$.map(startDragging);
+  const stopDragging$ = Mouse.up$.map(stopDragging);
+
+  const resizerAction$ = O.merge(
+    moveMouse$,
+    startDragging$,
+    stopDragging$
+  );
+
+  const resizerState$ = resizerAction$
+    .startWith(editorWidthState)
+    .scan((state, action) => action(state));
+
+  const editorWidth$ = resizerState$
+    .pluck('width')
+    .distinctUntilChanged();
+
   return {
-    DOM: SubApp.error$.map(error =>
-      div('.editor', [
-        div({key: 1, id: 'editor-inner', style: {height: error.message === '' ? '100%' : '80%'}}),
-        pre('.message-panel', {key: 2, style: {height: error.message === '' ? '0%' : '20%'}}, error.message)
-      ])
+    DOM: O.combineLatest(
+      SubApp.error$,
+      editorWidth$,
+      (error, editorWidth) => (
+        div('.editor', [
+          div('.editor-main', {style: {width: editorWidth + 'px'}}, [
+            div(
+              {
+                key: 1,
+                id: 'editor-inner',
+                style: {
+                  height: error.message === '' ? '100%' : '80%'
+                }
+              }
+            ),
+
+            pre('.message-panel', {
+              key: 2,
+              style: {
+                height: error.message === '' ? '0%' : '20%'
+              }
+            }, error.message)
+          ]),
+
+          div('.editor-resizer')
+        ])
+      )
     ),
 
     Ace: code$.pluck('code').take(1),
