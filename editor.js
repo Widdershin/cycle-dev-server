@@ -133,6 +133,8 @@ function updateWidthIfDragging (mousePosition) {
   return function (resizerState) {
     if (resizerState.dragging) {
       resizerState.width = mousePosition.x;
+
+      resizerState.visible = resizerState.width > 1;
     }
 
     return resizerState;
@@ -155,6 +157,20 @@ function stopDragging () {
   };
 }
 
+function toggleWidth () {
+  return function (resizerState) {
+    if (resizerState.visible) {
+      resizerState.visible = false;
+      resizerState.width = 0;
+    } else {
+      resizerState.visible = true;
+      resizerState.width = 600;
+    }
+
+    return resizerState;
+  }
+}
+
 function main ({DOM, Ace, HTTP, SubApp, Mouse}) {
   const serverCode$ = HTTP
     .filter(response$ => response$.request.method === 'GET')
@@ -170,19 +186,26 @@ function main ({DOM, Ace, HTTP, SubApp, Mouse}) {
     .select('.editor-resizer')
     .events('mousedown');
 
+  const doubleClickEditorResizer$ = DOM
+    .select('.editor-resizer')
+    .events('dblclick');
+
   const editorWidthState = {
     dragging: false,
-    width: 600
+    width: 600,
+    visible: true
   };
 
   const moveMouse$ = Mouse.position$.map(updateWidthIfDragging);
   const startDragging$ = mouseDownEditorResizer$.map(startDragging);
   const stopDragging$ = Mouse.up$.map(stopDragging);
+  const toggleWidth$ = doubleClickEditorResizer$.map(toggleWidth);
 
   const resizerAction$ = O.merge(
     moveMouse$,
     startDragging$,
-    stopDragging$
+    stopDragging$,
+    toggleWidth$
   );
 
   const resizerState$ = resizerAction$
