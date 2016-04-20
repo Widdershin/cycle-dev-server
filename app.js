@@ -8,11 +8,10 @@ const drivers = {
 
 function main ({DOM}) {
   return {
-    DOM: O.interval(100).map(i =>
-      div('.hello-world', 'Hello world')
+    DOM: O.interval(1000).map(i =>
+      div('.hello-world', 'Hello')
     )
   };
 }
-
 
 export {main, drivers};

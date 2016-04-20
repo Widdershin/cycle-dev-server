@@ -4,10 +4,7 @@ import {makeHTTPDriver} from '@cycle/http';
 
 import {Observable as O, ReplaySubject} from 'rx';
 
-const babel = require('babel-core');
-import es2015 from 'babel-preset-es2015';
-
-import vm from 'vm';
+const subApp = require('./app');
 
 import ace from 'brace';
 import 'brace/mode/javascript';
@@ -65,51 +62,9 @@ function aceDriver (code$) {
   return {code$: codeChange$};
 }
 
-function subAppDriver (code$) {
-  function compile (code) {
-    return babel.transform(code, {presets: [es2015]}).code;
-  }
-
-  function execute (compiledCode) {
-    const exports = {};
-    const context = {require, console, exports};
-
-    vm.runInNewContext(compiledCode, context);
-
-    return exports;
-  }
-
-  let sources, sinks;
-
-  const error$ = new ReplaySubject(1);
-
-  code$.subscribe(code => {
-    if (sources) {
-      sources.dispose();
-      sinks.dispose();
-    }
-
-    try {
-      const subApp = execute(compile(code));
-
-      const state = run(subApp.main, subApp.drivers);
-
-      sources = state.sources;
-      sinks = state.sinks;
-
-      error$.onNext({message: ''});
-    } catch (e) {
-      error$.onNext(e);
-    }
-  });
-
-  return {error$: error$.startWith({message: ''})};
-}
-
 const drivers = {
   DOM: makeDOMDriver('.tools'),
   HTTP: makeHTTPDriver({eager: true}),
-  SubApp: subAppDriver,
   Ace: aceDriver,
   Mouse: mouseDriver
 };
@@ -168,10 +123,10 @@ function toggleWidth () {
     }
 
     return resizerState;
-  }
+  };
 }
 
-function main ({DOM, Ace, HTTP, SubApp, Mouse}) {
+function main ({DOM, Ace, HTTP, Mouse}) {
   const serverCode$ = HTTP
     .filter(response$ => response$.request.method === 'GET')
     .mergeAll()
@@ -218,7 +173,7 @@ function main ({DOM, Ace, HTTP, SubApp, Mouse}) {
 
   return {
     DOM: O.combineLatest(
-      SubApp.error$,
+      O.just({message: ''}),
       editorWidth$,
       (error, editorWidth) => (
         div('.editor', [
@@ -248,11 +203,21 @@ function main ({DOM, Ace, HTTP, SubApp, Mouse}) {
 
     Ace: code$.pluck('code').take(1),
 
-    SubApp: code$.pluck('code'),
-
     HTTP: code$.debounce(500).map(updateServer).startWith(requestApp())
   };
 }
 
-run(main, drivers);
+const state = run(main, drivers);
 
+let subState = run(subApp.main, subApp.drivers);
+
+if (module.hot) {
+  module.hot.accept('./app', () => {
+    const app = require('./app');
+
+    subState.sources.dispose();
+    subState.sinks.dispose();
+
+    subState = run(app.main, app.drivers);
+  });
+}

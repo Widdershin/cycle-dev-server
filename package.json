@@ -15,6 +15,9 @@
     "@cycle/http": "^8.2.2",
     "body-parser": "^1.15.0",
     "brace": "^0.8.0",
+    "browserify-hmr": "^0.3.1",
+    "budo": "^8.1.0",
+    "errorify": "^0.3.1",
     "express": "^4.13.4",
     "rx": "^4.1.0"
   },
