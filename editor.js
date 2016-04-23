@@ -71,7 +71,7 @@ const drivers = {
 
 function updateServer ({code}) {
   return {
-    url: '/code/app.js',
+    url: 'http://localhost:3000/code/app.js',
     method: 'PUT',
     send: {code}
   };
@@ -79,7 +79,7 @@ function updateServer ({code}) {
 
 function requestApp () {
   return {
-    url: '/code/app.js',
+    url: 'http://localhost:3000/code/app.js',
     method: 'GET'
   };
 }

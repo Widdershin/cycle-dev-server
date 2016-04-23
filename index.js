@@ -10,10 +10,12 @@
 import express from 'express';
 import fs from 'fs';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 
 const app = express();
 
 app.use(bodyParser.json());
+app.use(cors());
 
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html');
@@ -28,6 +30,7 @@ app.get('/styles.css', function (req, res) {
 });
 
 app.get('/code/app.js', function (req, res) {
+  console.log('requested app.js');
   res.send(JSON.stringify({code: fs.readFileSync('./app.js', 'utf-8')}));
 });
 

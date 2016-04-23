@@ -5,6 +5,7 @@ Usage
 ---
 
 ```bash
+$ npm install cycle-dev-server
 $ cycle-dev-server
 ```
 
