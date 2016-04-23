@@ -1,6 +1,8 @@
 cycle-dev-server
 ===
 
+[![Join the chat at https://gitter.im/Widdershin/cycle-dev-server](https://badges.gitter.im/Widdershin/cycle-dev-server.svg)](https://gitter.im/Widdershin/cycle-dev-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Usage
 ---
 
