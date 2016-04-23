@@ -1,8 +1,11 @@
 import budo from 'budo';
 import babelify from 'babelify';
 import hotModuleReloading from 'browserify-hmr';
+import path from 'path';
 
-budo('./editor.js', {
+const EDITOR_PATH = path.join(__dirname, 'editor.js');
+
+budo(EDITOR_PATH, {
   serve: 'bundle.js',
   live: '*.{css,html}',
   port: 8000,

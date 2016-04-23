@@ -4,7 +4,7 @@ import {makeHTTPDriver} from '@cycle/http';
 
 import {Observable as O, ReplaySubject} from 'rx';
 
-const subApp = require('./app');
+const subApp = require('../../app');
 
 import ace from 'brace';
 import 'brace/mode/javascript';
@@ -212,8 +212,8 @@ const state = run(main, drivers);
 let subState = run(subApp.main, subApp.drivers);
 
 if (module.hot) {
-  module.hot.accept('./app', () => {
-    const app = require('./app');
+  module.hot.accept('../../app', () => {
+    const app = require('../../app');
 
     subState.sources.dispose();
     subState.sinks.dispose();
