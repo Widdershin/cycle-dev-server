@@ -17,18 +17,6 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
-});
-
-app.get('/editor.js', function (req, res) {
-  res.sendFile(__dirname + '/editor.bundle.js');
-});
-
-app.get('/styles.css', function (req, res) {
-  res.sendFile(__dirname + '/styles.css');
-});
-
 app.get('/code/app.js', function (req, res) {
   console.log('requested app.js');
   res.send(JSON.stringify({code: fs.readFileSync('./app.js', 'utf-8')}));
